@@ -3,18 +3,46 @@
   <link href="bootstrap.css" rel="stylesheet" type="text/css"></link>
   <script src="jquery-1.8.2.min.js" type="text/javascript"></script>
   <script src="knockout-2.2.0.js" type="text/javascript"></script>
+  <script src="underscore-min.js" type="text/javascript"></script>
   <script src="steam_api.js" type="text/javascript"></script>
+  <style>
+    input[type=text] {
+      font-size: 18;
+      height: 32px;
+      position: relative;
+      top: 4px;
+    }
+  </style>
   <script type="text/javascript">
     AppList = function() {
       var self = this;
 
       self.title = ko.observable("houston.js - Knockout Steam");
       self.apps = ko.observableArray([]);
+      self.searchText = ko.observable();
 
       SteamApi.getAppList(function(data) {
-        apps = $.map(data.applist.apps.app.slice(0, 30), function(d) { return new App(d); });
+        apps = $.map(data.slice(0, 20), function(d) { return new App(d); });
         self.apps(apps);
       });
+
+      self.sortByCurrentPlayers = function() {
+        self.apps.sort(function(left, right) {
+          if (left.currentPlayers() == right.currentPlayers())
+            return 0;
+          if (left.currentPlayers() < right.currentPlayers())
+            return 1;
+          else
+            return -1;
+        });
+      }
+
+      self.search = function() {
+        SteamApi.searchApps(self.searchText(), function(data) {
+          apps = $.map(data, function(d) { return new App(d); });
+          self.apps(apps);
+        });
+      }
 
       return self;
     }
@@ -25,15 +53,23 @@
       self.id = ko.observable(data.appid);
       self.name = ko.observable(data.name);
       self.newsItems = ko.observableArray([]);
+      self.achievements = ko.observableArray([]);
+      self.currentPlayers = ko.observable();
 
       self.getDetails = function() {        
         SteamApi.getNews(self.id(), function(data) {
-          console.log("get news");
-          console.log(data);
-          newsItems = $.map(data.appnews.newsitems, function(d) { return new NewsItem(d); });
+          newsItems = $.map(data, function(d) { return new NewsItem(d); });
           self.newsItems(newsItems);          
         });
+        SteamApi.getAchievements(self.id(), function(data) {
+          achievements = $.map(data, function(d) { return new Achievement(d); });
+          self.achievements(achievements);          
+        });
       }
+
+      SteamApi.getCurrentPlayers(self.id(), function(data) {
+        self.currentPlayers(data.player_count);        
+      });      
 
       return self;
     }
@@ -50,6 +86,21 @@
       return self;
     }
 
+    Achievement = function(data) {
+      var self = this;
+
+      self.name = ko.observable(data.name);
+      self.percent = ko.observable(data.percent);
+
+      self.progress = ko.computed(function() {
+        return self.percent() + "%";
+      });
+
+      return self;
+    }
+
+
+
     $(function() {
       var appList = new AppList();
       ko.applyBindings(appList);
@@ -61,8 +112,15 @@
     <div class="container">
       <div class="row">
         <div class="span12">
-          <div class="page-header">
+          <div class="page-header">            
             <h1 data-bind="text: title"></h1>
+
+            <button class="btn pull-right" data-bind="click: sortByCurrentPlayers">Sort by Current Players</button>
+
+            <form data-bind="submit: search">
+              <input class="input-xxlarge" type="text" data-bind="value: searchText" placeholder="Search..."></input>
+            </form>            
+            
           </div>
         </div>
       </div>
@@ -71,7 +129,12 @@
         <div class="span12">
           <ul data-bind="foreach: apps" class="unstyled">
             <li class="row">
-              <h3 data-bind="text: name, click: getDetails"></h4>
+              <h3>
+                <span data-bind="text: name, click: getDetails"></span>
+                <small>
+                  <span data-bind="text: currentPlayers"></span> current players
+                </small>
+              </h3>
 
               <div class="span6" data-bind="visible: newsItems().length > 0">
                 <h4>News</h4>
@@ -85,6 +148,19 @@
                   </li>
                 </ul>
               </div>
+
+              <div class="span4" data-bind="visible: achievements().length > 0">
+                <h4>Achievements</h4>
+                <ul class="unstyled" data-bind="foreach: achievements">
+                  <li class="thumbnail">
+                    <h5 data-bind="text: name"></h5>
+                    <div class="progress">
+                      <div class="bar" data-bind="style: { width: progress }"></div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
             </li>
           </ul>     
 
