@@ -62,7 +62,7 @@
           self.newsItems(newsItems);          
         });
         SteamApi.getAchievements(self.id(), function(data) {
-          achievements = $.map(data, function(d) { return new Achievement(d); });
+          achievements = $.map(data.slice(0,10), function(d) { return new Achievement(d); });
           self.achievements(achievements);          
         });
       }
@@ -139,7 +139,7 @@
               <div class="span6" data-bind="visible: newsItems().length > 0">
                 <h4>News</h4>
                 <ul class="unstyled" data-bind="foreach: newsItems">
-                  <li class="thumbnail">
+                  <li>
                     <p>
                       <a data-bind="text: title, attr: { href: url }" target="_blank"></a>
                     </p>
@@ -152,7 +152,7 @@
               <div class="span4" data-bind="visible: achievements().length > 0">
                 <h4>Achievements</h4>
                 <ul class="unstyled" data-bind="foreach: achievements">
-                  <li class="thumbnail">
+                  <li>
                     <h5 data-bind="text: name"></h5>
                     <div class="progress">
                       <div class="bar" data-bind="style: { width: progress }"></div>
@@ -160,16 +160,12 @@
                   </li>
                 </ul>
               </div>
-
             </li>
           </ul>     
 
         </div>
       </div>
-
     </div>
-
-
 
 </body>
 </html>
