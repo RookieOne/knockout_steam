@@ -1,0 +1,169 @@
+<html>
+<head>
+  <link href="bootstrap.css" rel="stylesheet" type="text/css"></link>
+  <script src="jquery-1.8.2.min.js" type="text/javascript"></script>
+  <script src="knockout-2.2.0.js" type="text/javascript"></script>
+  <script src="underscore-min.js" type="text/javascript"></script>
+  <script src="steam_api.js" type="text/javascript"></script>
+  <style>
+    input[type=text] {
+      font-size: 18;
+      height: 32px;
+      position: relative;
+      top: 4px;
+    }
+  </style>
+  <script type="text/javascript">
+
+  var SteamApp = function() {
+    var self = this;
+    self.title = ko.observable("houston.js - Knockout Steam");
+    self.apps = ko.observableArray([]);
+    self.searchText = ko.observable();
+
+    self.setApps = function(data) {
+      apps = $.map(data, function(d) { return new App(d); });
+      self.apps(apps);      
+    }
+
+    self.search = function() {
+      SteamApi.searchApps(self.searchText(), self.setApps);
+    }
+
+    self.sortByCurrentPlayers = function() {
+      self.apps.sort(function(left, right) {
+        if (left.currentPlayers() == right.currentPlayers())
+          return 0;
+        if (left.currentPlayers() > right.currentPlayers())
+          return -1;
+        else
+          return 1;
+      });
+    }    
+    self.sortByName = function() {
+      self.apps.sort(function(left, right) {
+        if (left.name() == right.name())
+          return 0;
+        if (left.name() > right.name())
+          return 1;
+        else
+          return -1;
+      });
+    }     
+
+    SteamApi.getApps(self.setApps);
+
+    return self;
+  }
+
+  var App = function(data) {
+    var self = this;
+    self.id = ko.observable(data.appid);
+    self.name = ko.observable(data.name);
+    self.currentPlayers = ko.observable();
+    self.newsItems = ko.observableArray([]);
+    self.achievements = ko.observableArray([]);
+
+    SteamApi.getCurrentPlayers(self.id(), function(data) {
+      self.currentPlayers(data.player_count);
+    });
+
+    self.getMoreDetails = function() {
+      SteamApi.getNews(self.id(), function(data) {
+        var news = $.map(data, function(d) { return new NewsItem(d); });
+        self.newsItems(news);
+      });
+      SteamApi.getAchievements(self.id(), function(data) {
+        var achievements = $.map(data, function(d) { return new Achievement(d); });
+        self.achievements(achievements);        
+      })
+    }
+
+    return self;
+  }
+
+  var NewsItem = function(data) {
+    var self = this;
+    self.title = ko.observable(data.title);
+    self.url = ko.observable(data.url);
+    self.contents = ko.observable(data.contents);
+    return self;
+  }
+
+  var Achievement = function(data) {
+    var self = this;
+    self.name = ko.observable(data.name);
+    self.percent = ko.observable(data.percent);
+
+    self.progress = ko.computed(function() {
+      return Math.round(self.percent()) + "%";
+    });
+
+    return self;
+  }
+
+  $(function() {
+    steamApp = new SteamApp();
+    ko.applyBindings(steamApp, );
+  })
+  
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="span12">
+        <div class="page-header">
+          <h1 data-bind="text: title"></h1>
+          <button class="btn pull-right" data-bind="click: sortByCurrentPlayers">
+            Sort by Current Players
+          </button>
+          <button class="btn pull-right" data-bind="click: sortByName">
+            Sort by Name
+          </button>          
+          <form data-bind="submit: search">
+            <input type="text" class="input-xxlarge" placeholder="Search..." data-bind="value: searchText"></input>
+          </form>
+        </div>
+
+        <ul class="unstyled" data-bind="foreach: apps">
+          <li class="row">
+            <h3>
+              <span data-bind="text: name, click: getMoreDetails"></span>
+              <small>
+                <span data-bind="text: currentPlayers"></span>
+                current players
+              </small>
+            </h3>
+
+            <div class="span6" data-bind="visible: newsItems().length > 0">
+              <h4>News</h4>
+              <ul class="unstyled" data-bind="foreach: newsItems">
+                <li>
+                  <a data-bind="text: title, attr: { href: url}" target="_blank"></a>
+                  <p data-bind="html: contents"></p>
+                </li>
+              </ul>
+            </div>
+
+            <div class="span4" data-bind="visible: achievements().length > 0">
+              <h4>Achivements</h4>
+              <ul class="unstyled" data-bind="foreach: achievements">
+                <li>
+                  <span data-bind="text: name"></span>
+                  <span data-bind="text: progress"></span>
+                  <div class="progress">
+                    <div class="bar" data-bind="style: { width: progress }"></div>
+                  </div>
+                </li>
+              </ul>
+            </div>            
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </div>
+  
+</body>
+</html>

@@ -21,7 +21,7 @@
       self.apps = ko.observableArray([]);
       self.searchText = ko.observable();
 
-      SteamApi.getAppList(function(data) {
+      SteamApi.getApps(function(data) {
         apps = $.map(data.slice(0, 20), function(d) { return new App(d); });
         self.apps(apps);
       });
@@ -62,7 +62,7 @@
           self.newsItems(newsItems);          
         });
         SteamApi.getAchievements(self.id(), function(data) {
-          achievements = $.map(data.slice(0,10), function(d) { return new Achievement(d); });
+          achievements = $.map(data, function(d) { return new Achievement(d); });
           self.achievements(achievements);          
         });
       }

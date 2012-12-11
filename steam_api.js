@@ -1,9 +1,9 @@
 
 SteamApi = {
   base: "http://api.steampowered.com/",
-  getAppList: function(fx) {
+  getApps: function(fx) {
     $.get(SteamApi.base + "ISteamApps/GetAppList/v0001", function(response) {
-      fx(response.applist.apps.app);
+      fx(response.applist.apps.app.slice(0, 10));
     });
   },
   searchApps: function(searchText, fx) {
@@ -27,7 +27,7 @@ SteamApi = {
   },
   getAchievements: function(id, fx) {
     $.get(SteamApi.base + "ISteamUserStats/GetGlobalAchievementPercentagesForApp/v0002/?gameid=" + id + "&xml=1", function(response) {      
-      fx(response.achievementpercentages.achievements);
+      fx(response.achievementpercentages.achievements.slice(0, 10));
     });
-  }  
+  }
 };
