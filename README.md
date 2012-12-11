@@ -1,5 +1,5 @@
 
-# 1 Title
+# Title
 
 ```javascript
 var SteamApp = function() {
@@ -28,7 +28,7 @@ $(function() {
 </body>
 ```
 
-# 2 App List
+# App List
 
 ```javascript
 // inside SteamApp
@@ -49,7 +49,7 @@ SteamApi.getApps(function(data) {
 </ul>
 ```
 
-# 3 Search
+# Search
 
 ```javascript
 // inside SteamApp
@@ -69,7 +69,7 @@ self.searchApps = function() {
 </form>
 ```
 
-# 4 Refactor
+# Refactor
 
 ```javascript
 // inside SteamApp
@@ -85,7 +85,7 @@ self.searchApps = function() {
 }
 ```
 
-# 5 App View Model
+# App View Model
 
 ```javascript
 var App = function(data) {
@@ -120,7 +120,7 @@ self.setApps = function(data) {
 </h3>
 ```
 
-# 5 Sort by Name
+# Sort by Name
 
 ```javascript
 // inside SteamApp
@@ -144,7 +144,7 @@ self.sortByName = function() {
 </button>
 ```
 
-# 6 Sort by Current Players
+# Sort by Current Players
 
 ```javascript
 // inside SteamApp
@@ -170,7 +170,7 @@ self.sortByCurrentPlayers = function() {
 </button>
 ```
 
-# 7 News 
+# News 
 
 ```javascript
 // inside SteamApp
@@ -204,7 +204,7 @@ self.getMoreDetails = function() {
 </div>
 ```
 
-# 8 Achievements
+# Achievements
 
 ```javascript
 var Achievement = function(data) {
