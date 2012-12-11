@@ -18,6 +18,90 @@
   var SteamApp = function() {
     var self = this;
     self.title = ko.observable("Knockout Steam");
+
+    self.apps = ko.observableArray([]);
+
+    self.setApps = function(data) {
+      apps = _.map(data, function(d) { return new App(d); });
+      self.apps(apps);
+    }
+
+    SteamApi.getApps(self.setApps);
+
+    self.searchText = ko.observable();
+    self.searchApps = function() {
+      SteamApi.searchApps(self.searchText(), self.setApps);
+    }
+
+    self.sortByName = function() {
+      self.apps.sort(function(left, right) {
+        if (left.name() == right.name())
+          return 0;
+        else
+          if (left.name() < right.name())
+            return -1;
+          else
+            return 1;
+      });
+    }
+
+    self.sortByCurrentPlayers = function() {
+      self.apps.sort(function(left, right) {
+        if (left.currentPlayers() == right.currentPlayers())
+          return 0;
+        else
+          if (left.currentPlayers() < right.currentPlayers())
+            return 1;
+          else
+            return -1;        
+      })
+    }
+
+    return self;
+  }
+
+  var App = function(data) {
+    var self = this;
+    self.id = ko.observable(data.appid);
+    self.name = ko.observable(data.name);
+    self.currentPlayers = ko.observable();
+
+    SteamApi.getCurrentPlayers(self.id(), function(data) {
+      self.currentPlayers(data.player_count);
+    });
+
+    self.newsItems = ko.observableArray([]);
+    self.achievements = ko.observableArray([]);
+    self.getMoreDetails = function() {
+      SteamApi.getNews(self.id(), function(data) {
+        var news = _.map(data, function(d) { return new NewsItem(d); });
+        self.newsItems(news);
+      });
+      SteamApi.getAchievements(self.id(), function(data) {
+        var achievements = _.map(data, function(d) { return new Achievement(d); });
+        self.achievements(achievements);
+      })
+    }
+
+    return self;
+  }
+
+  var NewsItem = function(data) {
+    var self = this;
+    self.title = ko.observable(data.title);
+    self.url = ko.observable(data.url);
+    self.contents = ko.observable(data.contents);
+    return self;
+  }
+
+  var Achievement = function(data) {
+    var self = this;
+    self.name = ko.observable(data.name);
+    self.percent = ko.observable(data.percent);
+    self.progress = ko.computed(function() {
+      return Math.round(self.percent()) + "%";
+    });
+
     return self;
   }
 
@@ -33,6 +117,56 @@
     <div class="row">
       <div class="span12">
         <h1 data-bind="text: title"></h1>
+
+        <button class="btn pull-right" data-bind="click: sortByName">
+          Sort by Name
+        </button>
+
+        <button style="margin-right: 4px" 
+                class="btn pull-right" 
+                data-bind="click: sortByCurrentPlayers">
+          Sort by Current Players
+        </button>
+
+        <form data-bind="submit: searchApps">
+          <input type="text" class="input-xxlarge" data-bind="value: searchText"></input>
+        </form>
+        
+
+        <ul class="unstyled" data-bind="foreach: apps">
+          <li class="row">
+            <h3>
+              <span data-bind="text: name, click: getMoreDetails"></span>
+              <small>
+                <span data-bind="text: currentPlayers"></span>
+              </small>
+            </h3>
+
+            <div class="span6" data-bind="visible: newsItems().length > 0">
+              <h4>News</h4>
+              <ul class="unstyled" data-bind="foreach: newsItems">
+                <li>
+                  <a data-bind="text: title, attr: { href: url }"></a>                
+                  <p data-bind="html: contents"></p>
+                </li>
+              </ul>
+            </div>
+
+            <div class="span4" data-bind="visible: achievements().length > 0">
+              <h4>Achievements</h4>
+              <ul class="unstyled" data-bind="foreach: achievements">
+                <li>
+                  <span data-bind="text: name"></span>                  
+                  <span class="pull-right" data-bind="text: progress"></span>                  
+                  <div class="progress">
+                    <div class="bar" data-bind="style: { width: progress }"></div>
+                  </div>
+                </li>
+              <ul>
+            </div>
+
+          </li>
+        </ul>
       </div>
     </div>
   </div>
